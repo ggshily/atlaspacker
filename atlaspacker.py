@@ -180,4 +180,4 @@ for image in atlasImages:
     tFile.write("\n  size: " + str(image["size"][0]) + ", " + str(image["size"][1]))
     tFile.write("\n  orig: " + str(image["size"][0]) + ", " + str(image["size"][1]))
     tFile.write("\n  offset: 0, 0")
-    tFile.write("\n  index: -1\n")
+    tFile.write("\n  index: -1")
