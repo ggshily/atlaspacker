@@ -54,7 +54,7 @@ def getImages(target):
                     currentImage = Image.open(os.path.join(item, entry))
                     finalList.append({"file": os.path.join(item, entry), "size": currentImage.size, "position":None, "image": currentImage})
        	elif os.path.isfile(item):
-            if os.path.splitext(arg)[-1] in IMAGETYPES:
+            if os.path.splitext(item)[-1] in IMAGETYPES:
                 currentImage = Image.open(item)
                 finalList.append({"file": item, "size": currentImage.size, "position":None, "image": currentImage})
     return finalList
@@ -151,19 +151,14 @@ for image in atlasImages:
 finalImage.save(outputFilename)
 
 tFile = open(os.path.splitext(outputFilename)[0] + ".txt", "w")
-tFile.write(outputFilename + "\nformat:RGBA8888")
+tFile.write(outputFilename + "\nformat: RGBA8888")
 tFile.write("\nfilter: " + IMAGEFILTER + "," + IMAGEFILTER)
 tFile.write("\nrepeat: none")
 for image in atlasImages:
     tFile.write("\n" + os.path.split(image["file"])[-1][:-4])
-    tFile.write("\n  rotate:false")
+    tFile.write("\n  rotate: false")
     tFile.write("\n  xy: " + str(image["position"][0]) + ", " + str(image["position"][1]))
     tFile.write("\n  size: " + str(image["size"][0]) + ", " + str(image["size"][1]))
     tFile.write("\n  orig: " + str(image["size"][0]) + ", " + str(image["size"][1]))
     tFile.write("\n  offset: 0, 0")
     tFile.write("\n  index: -1\n")
-
-
-
-
-
