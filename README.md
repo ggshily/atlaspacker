@@ -1,5 +1,6 @@
 atlaspacker
 ===========
+<<<<<<< HEAD
 A Simple tool to generate libGDX TextureAtlas.
 
 ### Requirements
@@ -41,3 +42,7 @@ This would create a TextureAtlas named my_graphics.png and a descriptor file nam
 ```-o``` will overwrite files with the same name without any prompts (useful when you have a script to automatically update your atlas)
 
 ```-f {linear|nearest}``` selects the TextureFilter used in the descriptor file. Defaults to Nearest.
+=======
+
+Simple CLI tool to generate libGDX TextureAtlas.
+>>>>>>> 0eb4fbc7cec384e6b0383d6d413cd8ed1cef5b7f
