@@ -1,6 +1,6 @@
 atlaspacker
 ===========
-A Simple tool to generate libGDX TextureAtlas.
+A Simple tool to generate libGDX TextureAtlases.
 
 ### Requirements
 atlaspacker needs Python (either 2.7 or 3, both are fine), and the [Pillow](http://python-imaging.github.io/) module, which you can easily install using [pip](https://pypi.python.org/pypi/pip) if it's not already available on your system. If you're using a Debian-based system, you can just ```sudo apt-get install python-imaging``` or ```sudo apt-get install python3-imaging```.
