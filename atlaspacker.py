@@ -176,7 +176,7 @@ for image in atlasImages:
 finalImage.save(outputFilename)
 
 tFile = open(os.path.splitext(outputFilename)[0] + ".txt", "w")
-tFile.write(outputFilename + "\nformat: RGBA8888")
+tFile.write(os.path.split(outputFilename)[-1] + "\nformat: RGBA8888")
 tFile.write("\nfilter: " + IMAGEFILTER + "," + IMAGEFILTER)
 tFile.write("\nrepeat: none")
 for image in atlasImages:
