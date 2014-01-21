@@ -2,7 +2,7 @@
 
 ########################################################################
 #
-# Copyright(C) 2014 Sandro Luiz S. de Paula
+# Copyright(C) 2014 Sandro Luiz S. de Paula <me@ansdor.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,21 +18,23 @@
 #
 ########################################################################
 
+#Check if Pillow is available, do necessary imports
+import math, sys, os, argparse
 try:
 	from PIL import Image
 except ImportError:
-	print "ERROR: PIL/Pillow library not found."
+	print("ERROR: PIL/Pillow library not found.")
 	sys.exit(0)
-import math, sys, os, argparse
 
+#Argparser stuff
 parser = argparse.ArgumentParser()
 parser.add_argument("input", help="The file(s) or folder you want to convert into a TextureAtlas", type=str, nargs="+")
 parser.add_argument("output", help="Filename for the TextureAtlas files", type=str)
 parser.add_argument("-f", "--filter", help="Type of filter to use in the configuration files. (Default: Nearest)", type=str, choices=["linear", "nearest"])
 parser.add_argument("-p2", "--powerof2", help="Force power-of-2 sized output image.",  action="store_true")
-parser.add_argument("-s", "--square", help="Force square output image.", action="store_true")
+parser.add_argument("-sq", "--square", help="Force square output image.", action="store_true")
 parser.add_argument("-o", "--overwrite", help="Overwrite existing files with the same name without any prompts.", action="store_true")
-
+parser.add_argument("-s", "--spacing", help="amount of space (in pixels) between the sprites", type=int)
 args = parser.parse_args()
 
 #CONSTANTS
@@ -42,6 +44,10 @@ IMAGETYPES = [".png", ".jpg", ".gif", ".bmp"]
 MAXSIZE = (8192, 8192)
 
 #ARGUMENTS
+if args.spacing:
+    SPACING = args.spacing
+else:
+    SPACING = 0
 #Force square output
 FORCESQUARE = args.square
 #Force po2 output
@@ -81,14 +87,11 @@ def getImages(target):
 #Finds the best cell to pack an image.        
 def findCell(img, cells, size):
     for cell in cells:
-        if (img["size"][0] <= cell["size"][0] and 
-        img["size"][1] <= cell["size"][1] and 
-        cell["position"][0]+img["size"][0] <= size[0] and 
-        cell["position"][1]+img["size"][1] <= size[1]):
-            return cell
+        if cell["position"][0]+img["size"][0] <= size[0] and cell["position"][1]+img["size"][1] <= size[1]:
+            if img["size"][0] <= cell["size"][0] and img["size"][1] <= cell["size"][1]:
+                return cell
     for cell in cells:
-        if (img["size"][0] <= cell["size"][0] and 
-        img["size"][1] <= cell["size"][1]):
+        if img["size"][0] <= cell["size"][0] and img["size"][1] <= cell["size"][1]:
             return cell
     return None
 
@@ -99,55 +102,59 @@ else:
 
 if os.path.isfile(outputFilename) and not OVERWRITE:
     while True:
-        print "File", outputFilename, "already exists, overwrite?"
+        print("File", outputFilename, "already exists, overwrite?")
         answer = raw_input("(Y/n):\t")
         if answer in NOSTRINGS:
             sys.exit(0)
         elif answer in YESSTRINGS or answer == "":
             break
         else:
-            print "ERROR: Invalid answer."
+            print("ERROR: Invalid answer.")
         
 
 #Create a list of image files in the files/folders the user entered
 atlasImages = getImages(args.input)
 if atlasImages == []:
-    print "ERROR: Input doesn't contain any image files."
+    print("ERROR: Input doesn't contain any image files.")
     sys.exit(0)
 #Sort the list based on the largest size of the image
 atlasImages = sorted(atlasImages, key=lambda img: max(img["size"][0], img["size"][1]))
 #Reverse the list so the larger images come first
 atlasImages.reverse()
 
-freeCells = [{"size": MAXSIZE, "position": (0, 0)}]
-
-baseSize = (0, 0)
+freeCells = [{"size": MAXSIZE, "position": (SPACING, SPACING)}]
+baseSize = (SPACING, SPACING)
 for image in atlasImages:
     packedCell = findCell(image, freeCells, baseSize)
     if packedCell:
-        image["position"] = (packedCell["position"][0], packedCell["position"][1])
+        image["position"] = packedCell["position"]
         
-        freeCells.append({
-        "size": (image["size"][0], packedCell["size"][1]-image["size"][1]), 
-        "position": (packedCell["position"][0], packedCell["position"][1]+image["size"][1])
-        })
+        vcell = {
+        "size": (image["size"][0], packedCell["size"][1]-(image["size"][1]+SPACING)),
+        "position": (packedCell["position"][0], packedCell["position"][1]+image["size"][1]+SPACING)
+        }
         
-        freeCells.append({
-        "size": (packedCell["size"][0]-image["size"][0], packedCell["size"][1]), 
-        "position": (packedCell["position"][0]+image["size"][0], packedCell["position"][1])
-        })
+        hcell = {
+        "size": (packedCell["size"][0]-(image["size"][0]+SPACING), packedCell["size"][1]),
+        "position": (packedCell["position"][0]+image["size"][0]+SPACING, packedCell["position"][1])
+        }
         
+        freeCells.append(vcell)
+        freeCells.append(hcell)
         freeCells.remove(packedCell)
+
         if image["position"][0]+image["size"][0] > baseSize[0]:
             baseSize = (image["position"][0]+image["size"][0], baseSize[1])
         if image["position"][1]+image["size"][1] > baseSize[1]:
             baseSize = (baseSize[0], image["position"][1]+image["size"][1])
     else:
-        print "Unable to pack", image["file"]
+        print("Unable to pack", image["file"])
     for cell in freeCells:
         if cell["position"][0] >= MAXSIZE[0] or cell["position"][1] >= MAXSIZE[1]:
             freeCells.remove(cell)
     freeCells = sorted(freeCells, key=lambda cell: pointDistance(cell["position"], (0, 0)))
+
+baseSize = (baseSize[0]+SPACING, baseSize[1]+SPACING)
 
 if FORCEPO2:
     a = 1
@@ -165,7 +172,6 @@ if FORCESQUARE:
 finalImage = Image.new("RGBA", baseSize)
 for image in atlasImages:
     if image["position"] != None:
-        #print "Writing", image["file"], "at", image["position"]
         finalImage.paste(image["image"], image["position"])
 finalImage.save(outputFilename)
 
